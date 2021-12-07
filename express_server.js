@@ -1,6 +1,22 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bodyParser = require("body-parser");
+
+function generateRandomString() {
+  let text = "";
+  const possible = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (let i = 0; i < 5; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+
+  return text;
+}
+
+console.log(generateRandomString());
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
 
@@ -28,6 +44,11 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: req.params.longURL,
   };
   res.render("urls_show", templateVars);
+});
+
+app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
+  res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 app.listen(PORT, () => {
