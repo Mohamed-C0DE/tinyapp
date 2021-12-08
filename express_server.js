@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 
 // helper functions
-function generateRandomString() {
+const generateRandomString = () => {
   let text = "";
   const possible = "abcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -14,7 +14,16 @@ function generateRandomString() {
   }
 
   return text;
-}
+};
+
+const emailLookup = (email) => {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return true;
+    }
+  }
+  return false;
+};
 
 // middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -28,7 +37,13 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
-const users = {};
+const users = {
+  "123d": {
+    id: "123",
+    email: "123@example.com",
+    password: "abc",
+  },
+};
 
 // Response sent to homepage
 app.get("/", (req, res) => {
@@ -121,6 +136,17 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+
+  if (!email || !password) {
+    res.status(400).send("Email and password fields must be filled!");
+  }
+
+  const emailExists = emailLookup(email);
+
+  if (emailExists) {
+    res.status(400).send("Email already exists!");
+  }
+
   users[id] = { id, email, password };
   const user = users[id];
   res.cookie("user_id", user.id);
