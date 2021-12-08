@@ -39,11 +39,11 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-// Response with urls_show ejs file
+// Response is urls_show ejs file
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: req.params.longURL,
+    longURL: urlDatabase[req.params.shortURL],
   };
   res.render("urls_show", templateVars);
 });
@@ -65,6 +65,13 @@ app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/${shortURL}`);
+});
+
+// Edits a shortURL from the database
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.longURL;
+  res.redirect("/urls");
 });
 
 // Deletes a shortURL from the database
