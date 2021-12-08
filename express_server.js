@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 
 function generateRandomString() {
   let text = "";
@@ -15,6 +16,7 @@ function generateRandomString() {
 }
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
@@ -30,18 +32,20 @@ app.get("/", (req, res) => {
 
 // Response with urls_index ejs file
 app.get("/urls", (req, res) => {
-  const templeVars = { urls: urlDatabase };
+  const templeVars = { username: req.cookies.username, urls: urlDatabase };
   res.render("urls_index", templeVars);
 });
 
 // Response with urls_new ejs file
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templeVars = { username: req.cookies[username] };
+  res.render("urls_new", templeVars);
 });
 
 // Response is urls_show ejs file
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
+    username: req.cookies[username],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
@@ -78,6 +82,19 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
   const id = req.params.shortURL;
   delete urlDatabase[id];
+  res.redirect("/urls");
+});
+
+// Login route
+app.post("/login", (req, res) => {
+  const user = req.body.username;
+  res.cookie("username", user);
+  res.redirect("/urls");
+});
+
+// Logout route
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
   res.redirect("/urls");
 });
 
