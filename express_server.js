@@ -4,6 +4,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 
+// helper functions
 function generateRandomString() {
   let text = "";
   const possible = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -15,37 +16,44 @@ function generateRandomString() {
   return text;
 }
 
+// middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
+// Data our app uses
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
 
+const users = {};
+
 // Response sent to homepage
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 // Response with urls_index ejs file
 app.get("/urls", (req, res) => {
-  const templeVars = { username: req.cookies.username, urls: urlDatabase };
+  const userId = req.cookies.user_id;
+  const templeVars = { user: users[userId], urls: urlDatabase };
   res.render("urls_index", templeVars);
 });
 
 // Response with urls_new ejs file
 app.get("/urls/new", (req, res) => {
-  const templeVars = { username: req.cookies[username] };
+  const userId = req.cookies.user_id;
+  const templeVars = { user: users[userId] };
   res.render("urls_new", templeVars);
 });
 
 // Response is urls_show ejs file
 app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.cookies.user_id;
   const templateVars = {
-    username: req.cookies[username],
+    user: users[userId],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
@@ -100,6 +108,24 @@ app.post("/logout", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
+});
+
+// Register
+app.get("/register", (req, res) => {
+  const userId = req.cookies.user_id;
+  const templeVars = { user: users[userId] };
+  res.render("register", templeVars);
+});
+
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  users[id] = { id, email, password };
+  const user = users[id];
+  res.cookie("user_id", user.id);
+  console.log(users);
+  res.redirect("/urls");
 });
 
 // app.get("/urls.json", (req, res) => {
