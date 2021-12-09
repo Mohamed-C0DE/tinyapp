@@ -19,7 +19,8 @@
   <body>
     <header><%-include('partials/_header') %></header>
     <main style="margin: 1em">
-      <h3 class="font-weight-bold">My URLs</h3>
+      <h3 class="font-weight-bold text-center">My URLs</h3>
+      <% if( user ){ %>
       <table class="table">
         <thead>
           <tr>
@@ -29,7 +30,6 @@
             <th scope="col">Delete</th>
           </tr>
         </thead>
-        <% if( user ){ %>
         <tbody>
           <% for(let url in urls) { %>
           <tr>
@@ -52,7 +52,13 @@
           </tr>
           <% } %>
         </tbody>
-        <% } else{ %> <% } %>
+        <% } else{ %>
+
+        <p class="alert alert-danger text-center">
+          Please login to view your shortURL
+        </p>
+
+        <% } %>
       </table>
     </main>
     <!-- Bootstrap JS -->

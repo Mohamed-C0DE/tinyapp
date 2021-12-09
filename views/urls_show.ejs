@@ -13,10 +13,12 @@
 
   <body>
     <header><%-include('partials/_header') %></header>
+    <% if( user ){ %> <% for(let key in userUrls) { %> <% if( key === shortURL){
+    %>
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= userUrls[key].longURL %></h5>
         <p class="card-text">
           Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a>
         </p>
@@ -35,7 +37,7 @@
                 class="form-control"
                 type="text"
                 name="longURL"
-                value="<%= longURL %>"
+                value="<%= userUrls[key].longURL %>"
                 placeholder="http://"
                 style="width: 300px; margin: 1em"
               />
@@ -45,6 +47,15 @@
         </div>
       </div>
     </div>
+    <% } %> <% } if (userUrls[shortURL] === undefined) {%>
+    <p class="alert alert-danger text-center">
+      You don't have that shortURL in your urls
+    </p>
+    <% } %> <% } else{ %>
+    <p class="alert alert-danger text-center">
+      Please login to view your shortURLs
+    </p>
+    <% } %>
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
