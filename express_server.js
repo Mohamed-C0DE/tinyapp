@@ -4,7 +4,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 
-// helper functions
+// HELPER FUNCTIONS
 const generateRandomString = () => {
   let text = "";
   const possible = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -19,19 +19,19 @@ const generateRandomString = () => {
 const emailLookup = (email) => {
   for (const user in users) {
     if (users[user].email === email) {
-      return true;
+      return users[user];
     }
   }
   return false;
 };
 
-// middleware
+// MIDDLEWARE
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
-// Data our app uses
+// DATA OUR APP USES
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -45,26 +45,26 @@ const users = {
   },
 };
 
-// Response sent to homepage
+// REDIRECT HOME PAGE TO URLS PAGE
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
 
-// Response with urls_index ejs file
+// RENDER URLS_INDEX FILE
 app.get("/urls", (req, res) => {
   const userId = req.cookies.user_id;
   const templeVars = { user: users[userId], urls: urlDatabase };
   res.render("urls_index", templeVars);
 });
 
-// Response with urls_new ejs file
+// RENDER URLS_NEW FILE
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies.user_id;
   const templeVars = { user: users[userId] };
   res.render("urls_new", templeVars);
 });
 
-// Response is urls_show ejs file
+// RENDER URLS_SHOW FILE
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.cookies.user_id;
   const templateVars = {
@@ -75,7 +75,7 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// Redirects to longURL based on the shortURL key in urlDatabase
+// REDIRECTS TO longURL BASED ON THE shortURL KEY IN urlDatabase
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   // Added below if shortURL doesnt exist
@@ -85,7 +85,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-// Generates a random string and references the longURL inputed as the shortURL, then redirects to the urls_show ejs file
+// GENERATES A RANDOM STRING & REFERENCES THE longURL INPUTED AS THE shortURL, THEN REDIRECTS TO THE URLS_SHOW FILE
 app.post("/urls", (req, res) => {
   let longURL = req.body.longURL;
   let shortURL;
@@ -94,30 +94,45 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// Edits a shortURL from the database
+// EDIT shortURL
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.longURL;
   res.redirect("/urls");
 });
 
-// Deletes a shortURL from the database
+// DELETES shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
   const id = req.params.shortURL;
   delete urlDatabase[id];
   res.redirect("/urls");
 });
 
-// Login route
+// LOGIN ROUTE
+app.get("/login", (req, res) => {
+  const userId = req.cookies.user_id;
+  const templeVars = { user: users[userId] };
+  res.render("login", templeVars);
+});
+
 app.post("/login", (req, res) => {
-  const user = req.body.username;
-  res.cookie("username", user);
+  const enteredEmail = req.body.email;
+  const enteredPassword = req.body.password;
+  const user = emailLookup(enteredEmail);
+  if (!user) {
+    res.status(403).send("Email cannot be found!");
+  }
+  if (user.password !== enteredPassword) {
+    res.status(403).send("Invalid Password");
+  }
+  res.cookie("user_id", user.id);
+  console.log(users);
   res.redirect("/urls");
 });
 
-// Logout route
+// LOGOUT ROUTE
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
@@ -125,13 +140,15 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-// Register
+// REGISTER ROUTES
+// RENDERS REGISTER PAGE
 app.get("/register", (req, res) => {
   const userId = req.cookies.user_id;
   const templeVars = { user: users[userId] };
   res.render("register", templeVars);
 });
 
+// REGISTERS USER, INPUTS USER INTO USERS OBJ & REDIRECTS TO URLS PAGE
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
@@ -150,14 +167,5 @@ app.post("/register", (req, res) => {
   users[id] = { id, email, password };
   const user = users[id];
   res.cookie("user_id", user.id);
-  console.log(users);
   res.redirect("/urls");
 });
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
