@@ -33,13 +33,12 @@ app.set("view engine", "ejs");
 
 // DATA OUR APP USES
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "123d" },
 };
 
 const users = {
   "123d": {
-    id: "123",
+    id: "123d",
     email: "123@example.com",
     password: "abc",
   },
@@ -53,13 +52,22 @@ app.get("/", (req, res) => {
 // RENDER URLS_INDEX FILE
 app.get("/urls", (req, res) => {
   const userId = req.cookies.user_id;
-  const templeVars = { user: users[userId], urls: urlDatabase };
+  const userDatabase = {};
+  for (const key in urlDatabase) {
+    if (urlDatabase[key].userID === userId) {
+      userDatabase[key] = urlDatabase[key];
+    }
+  }
+  const templeVars = { user: users[userId], urls: userDatabase };
   res.render("urls_index", templeVars);
 });
 
 // RENDER URLS_NEW FILE
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies.user_id;
+  if (!userId) {
+    res.redirect("/login");
+  }
   const templeVars = { user: users[userId] };
   res.render("urls_new", templeVars);
 });
@@ -70,34 +78,38 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: users[userId],
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
   };
   res.render("urls_show", templateVars);
 });
 
 // REDIRECTS TO longURL BASED ON THE shortURL KEY IN urlDatabase
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  // Added below if shortURL doesnt exist
-  if (!longURL) {
+  const shortURL = req.params.shortURL;
+  if (!urlDatabase[shortURL]) {
     res.send("We dont have any record of that URL");
   }
-  res.redirect(longURL);
+  res.redirect(urlDatabase[shortURL].longURL);
 });
 
 // GENERATES A RANDOM STRING & REFERENCES THE longURL INPUTED AS THE shortURL, THEN REDIRECTS TO THE URLS_SHOW FILE
 app.post("/urls", (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    res.redirect("/login");
+  }
   let longURL = req.body.longURL;
   let shortURL;
   shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = { longURL, userID: userId };
   res.redirect(`/urls/${shortURL}`);
 });
 
 // EDIT shortURL
 app.post("/urls/:id", (req, res) => {
+  const userId = req.cookies.user_id;
   const id = req.params.id;
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id] = { longURL: req.body.longURL, userID: userId };
   res.redirect("/urls");
 });
 
@@ -126,7 +138,6 @@ app.post("/login", (req, res) => {
     res.status(403).send("Invalid Password");
   }
   res.cookie("user_id", user.id);
-  console.log(users);
   res.redirect("/urls");
 });
 
