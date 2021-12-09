@@ -29,11 +29,12 @@
             <th scope="col">Delete</th>
           </tr>
         </thead>
+        <% if( user ){ %>
         <tbody>
           <% for(let url in urls) { %>
           <tr>
             <td href="#"><%= url %></td>
-            <td href="#"><%= urls[url] %></td>
+            <td href="#"><%= urls[url].longURL %></td>
             <td>
               <a href="/urls/<%= url %>">
                 <button type="button" class="btn btn-outline-primary">
@@ -42,8 +43,8 @@
               </a>
             </td>
             <td>
-              <form method="POST" action="/urls/<%= url %>/delete">
-                <button type="button" class="btn btn-outline-danger">
+              <form method="POST" action="/urls/<%=url%>/delete">
+                <button type="submit" class="btn btn-outline-danger">
                   Delete
                 </button>
               </form>
@@ -51,6 +52,7 @@
           </tr>
           <% } %>
         </tbody>
+        <% } else{ %> <% } %>
       </table>
     </main>
     <!-- Bootstrap JS -->
