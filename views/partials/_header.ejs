@@ -26,17 +26,8 @@
       </div>
     </form>
     <% } else{ %>
-    <form class="form-inline" action="/login" method="POST">
-      <div class="form-group">
-        <input
-          class="form-control mr-3"
-          type="text"
-          name="username"
-          placeholder="username"
-        />
-        <button type="submit" class="btn btn-outline-dark">Login</button>
-      </div>
-    </form>
+    <a class="btn btn-outline-dark mr-2" href="/register">Register</a>
+    <a class="btn btn-outline-dark" href="/login">Login</a>
     <% } %>
   </nav>
 </header>
