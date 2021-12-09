@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 
 // HELPER FUNCTIONS
 const generateRandomString = () => {
@@ -50,7 +51,7 @@ const users = {
   "123d": {
     id: "123d",
     email: "123@example.com",
-    password: "abc",
+    password: bcrypt.hashSync("abc", 10),
   },
 };
 
@@ -119,7 +120,6 @@ app.post("/urls", (req, res) => {
 });
 
 // EDIT shortURL
-// EDITING WORKS, USE LOGIC TO CHANGE IF SOMEONE WANTS TO VIEW A SHORTURL THAT THEY DONT HAVE ACCESS TOO
 app.post("/urls/:id", (req, res) => {
   const userId = req.cookies.user_id;
   const shortURL = req.params.id;
@@ -165,12 +165,15 @@ app.post("/login", (req, res) => {
   const enteredEmail = req.body.email;
   const enteredPassword = req.body.password;
   const user = emailLookup(enteredEmail);
+  console.log(user);
+  const hashedPassword = user.password;
   if (!user) {
     res.status(403).send("Email cannot be found!");
   }
-  if (user.password !== enteredPassword) {
+  if (!bcrypt.compareSync(enteredPassword, hashedPassword)) {
     res.status(403).send("Invalid Password");
   }
+  console.log(users);
   res.cookie("user_id", user.id);
   res.redirect("/urls");
 });
@@ -197,7 +200,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, 10);
 
   if (!email || !password) {
     res.status(400).send("Email and password fields must be filled!");
@@ -210,7 +213,8 @@ app.post("/register", (req, res) => {
   }
 
   users[id] = { id, email, password };
-  const user = users[id];
-  res.cookie("user_id", user.id);
+  const registeredUser = users[id];
+  console.log(users);
+  res.cookie("user_id", registeredUser.id);
   res.redirect("/urls");
 });
