@@ -25,6 +25,16 @@ const emailLookup = (email) => {
   return false;
 };
 
+const urlsForUser = (id) => {
+  const urls = {};
+  for (const key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      urls[key] = urlDatabase[key];
+    }
+  }
+  return urls;
+};
+
 // MIDDLEWARE
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -75,10 +85,13 @@ app.get("/urls/new", (req, res) => {
 // RENDER URLS_SHOW FILE
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.cookies.user_id;
+  const shortURL = req.params.shortURL;
+  const userUrls = urlsForUser(userId);
+  console.log(userUrls, shortURL);
   const templateVars = {
     user: users[userId],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
+    shortURL: shortURL,
+    userUrls: userUrls,
   };
   res.render("urls_show", templateVars);
 });
@@ -106,18 +119,39 @@ app.post("/urls", (req, res) => {
 });
 
 // EDIT shortURL
+// EDITING WORKS, USE LOGIC TO CHANGE IF SOMEONE WANTS TO VIEW A SHORTURL THAT THEY DONT HAVE ACCESS TOO
 app.post("/urls/:id", (req, res) => {
   const userId = req.cookies.user_id;
-  const id = req.params.id;
-  urlDatabase[id] = { longURL: req.body.longURL, userID: userId };
-  res.redirect("/urls");
+  const shortURL = req.params.id;
+  const userUrls = urlsForUser(userId);
+  console.log(userUrls, req);
+  for (const key in userUrls) {
+    if (key === shortURL) {
+      urlDatabase[shortURL] = {
+        longURL: req.body.longURL,
+        userID: userId,
+      };
+      res.redirect("/urls");
+    }
+  }
+  res.send("You dont have access to this shortURL, so you can't edit it");
 });
 
 // DELETES shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const id = req.params.shortURL;
-  delete urlDatabase[id];
-  res.redirect("/urls");
+  const userId = req.cookies.user_id;
+  const shortURL = req.params.shortURL;
+  const userUrls = urlsForUser(userId);
+  console.log(userUrls);
+  for (const key in userUrls) {
+    if (key === shortURL) {
+      delete urlDatabase[shortURL];
+      res.redirect("/urls");
+    }
+  }
+  res
+    .status(400)
+    .send("You can't delete this shortURL because its not your shortURL.");
 });
 
 // LOGIN ROUTE
