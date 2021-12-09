@@ -16,11 +16,16 @@
   <body>
     <header><%-include('partials/_header') %></header>
     <main style="margin: 1em">
-      <h3>Login</h3>
+      <h3 class="font-weight-bold">Login</h3>
       <form class="pt-2" action="/login" method="POST">
         <div class="form-group">
           <label for="email">Email:</label>
-          <input class="form-control col-md-4" type="email" name="email" />
+          <input
+            class="form-control col-md-4"
+            type="email"
+            name="email"
+            placeholder="Enter Email"
+          />
         </div>
         <div class="form-group">
           <label for="password">Password:</label>
@@ -28,9 +33,12 @@
             class="form-control col-md-4"
             type="password"
             name="password"
+            placeholder="Password"
           />
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary font-weight-bold">
+          Login
+        </button>
       </form>
     </main>
     <!-- Bootstrap JS -->
