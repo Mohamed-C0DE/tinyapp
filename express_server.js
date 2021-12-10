@@ -1,8 +1,9 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const { getUserByEmail } = require("./helpers.js");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 
 // HELPER FUNCTIONS
@@ -17,15 +18,6 @@ const generateRandomString = () => {
   return text;
 };
 
-const emailLookup = (email) => {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return false;
-};
-
 const urlsForUser = (id) => {
   const urls = {};
   for (const key in urlDatabase) {
@@ -38,7 +30,12 @@ const urlsForUser = (id) => {
 
 // MIDDLEWARE
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["This key is using cookie session to build my tinyapp application"],
+  })
+);
 
 app.set("view engine", "ejs");
 
@@ -62,7 +59,7 @@ app.get("/", (req, res) => {
 
 // RENDER URLS_INDEX FILE
 app.get("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const userDatabase = {};
   for (const key in urlDatabase) {
     if (urlDatabase[key].userID === userId) {
@@ -75,7 +72,7 @@ app.get("/urls", (req, res) => {
 
 // RENDER URLS_NEW FILE
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   if (!userId) {
     res.redirect("/login");
   }
@@ -85,10 +82,9 @@ app.get("/urls/new", (req, res) => {
 
 // RENDER URLS_SHOW FILE
 app.get("/urls/:shortURL", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
   const userUrls = urlsForUser(userId);
-  console.log(userUrls, shortURL);
   const templateVars = {
     user: users[userId],
     shortURL: shortURL,
@@ -108,7 +104,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 // GENERATES A RANDOM STRING & REFERENCES THE longURL INPUTED AS THE shortURL, THEN REDIRECTS TO THE URLS_SHOW FILE
 app.post("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   if (!userId) {
     res.redirect("/login");
   }
@@ -121,10 +117,9 @@ app.post("/urls", (req, res) => {
 
 // EDIT shortURL
 app.post("/urls/:id", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const shortURL = req.params.id;
   const userUrls = urlsForUser(userId);
-  console.log(userUrls, req);
   for (const key in userUrls) {
     if (key === shortURL) {
       urlDatabase[shortURL] = {
@@ -139,10 +134,9 @@ app.post("/urls/:id", (req, res) => {
 
 // DELETES shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
   const userUrls = urlsForUser(userId);
-  console.log(userUrls);
   for (const key in userUrls) {
     if (key === shortURL) {
       delete urlDatabase[shortURL];
@@ -156,7 +150,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // LOGIN ROUTE
 app.get("/login", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const templeVars = { user: users[userId] };
   res.render("login", templeVars);
 });
@@ -164,23 +158,22 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const enteredEmail = req.body.email;
   const enteredPassword = req.body.password;
-  const user = emailLookup(enteredEmail);
-  console.log(user);
-  const hashedPassword = user.password;
-  if (!user) {
+  const userId = getUserByEmail(enteredEmail, users);
+  if (!userId) {
     res.status(403).send("Email cannot be found!");
   }
+  console.log(users);
+  const hashedPassword = users[userId].password;
   if (!bcrypt.compareSync(enteredPassword, hashedPassword)) {
     res.status(403).send("Invalid Password");
   }
-  console.log(users);
-  res.cookie("user_id", user.id);
+  req.session.user_id = userId;
   res.redirect("/urls");
 });
 
 // LOGOUT ROUTE
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  delete req.session.user_id;
   res.redirect("/urls");
 });
 
@@ -191,7 +184,7 @@ app.listen(PORT, () => {
 // REGISTER ROUTES
 // RENDERS REGISTER PAGE
 app.get("/register", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const templeVars = { user: users[userId] };
   res.render("register", templeVars);
 });
@@ -206,15 +199,15 @@ app.post("/register", (req, res) => {
     res.status(400).send("Email and password fields must be filled!");
   }
 
-  const emailExists = emailLookup(email);
+  const userId = getUserByEmail(email, users);
 
-  if (emailExists) {
+  if (userId) {
     res.status(400).send("Email already exists!");
   }
 
   users[id] = { id, email, password };
   const registeredUser = users[id];
-  console.log(users);
-  res.cookie("user_id", registeredUser.id);
+
+  req.session.user_id = registeredUser.id;
   res.redirect("/urls");
 });
