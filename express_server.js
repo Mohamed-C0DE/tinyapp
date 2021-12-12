@@ -31,7 +31,7 @@ const users = {
   "123d": {
     id: "123d",
     email: "123@example.com",
-    password: bcrypt.hashSync("abc", 10),
+    hashPassword: bcrypt.hashSync("abc", 10),
   },
 };
 
@@ -138,7 +138,7 @@ app.post("/login", (req, res) => {
   if (!userId) {
     res.send("Email cannot be found!");
   }
-  const hashedPassword = users[userId].password;
+  const hashedPassword = users[userId].hashPassword;
   if (!bcrypt.compareSync(enteredPassword, hashedPassword)) {
     res.send("Invalid Password");
   }
