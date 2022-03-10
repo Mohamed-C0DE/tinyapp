@@ -6,11 +6,11 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 !["gif of final product"](https://github.com/Mohamed-C0DE/tinyapp/blob/master/docs/tinyapp.gif?raw=true)
 
-## Dependencies
-
+## Tech Stack
 - Node.js
 - Express
-- EJS
+
+## Dependencies
 - bcrypt
 - body-parser
 - cookie-session
